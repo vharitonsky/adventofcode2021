@@ -14,9 +14,7 @@ def part_2(positions):
     fuel_consumptions = [0 for i in range(max(positions) + 1)]
     for p_possible in range(max(positions) + 1):
         for p in positions:
-            steps = abs(p_possible - p)
-            fuel = sum(i for i in range(1, steps + 1))
-            fuel_consumptions[p_possible] += fuel
+            fuel_consumptions[p_possible] += sum(range(1, abs(p_possible - p) + 1))
     return min(fuel_consumptions)
 
 
