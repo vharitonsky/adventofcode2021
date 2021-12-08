@@ -85,7 +85,6 @@ def part_2(input_data):
             (bottom_right, top_right): 1,
             (top, bottom, bottom_left, top_right, middle): 2,
             (top, bottom, bottom_right, top_right, middle): 3,
-            (bottom_right, top_right, top_left, middle): 3,
             (bottom_right, middle, top_right, top_left): 4,
             (top, bottom, top_left, bottom_right, middle): 5,
             (top, bottom, bottom_left, bottom_right, top_left, middle): 6,
