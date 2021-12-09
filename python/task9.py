@@ -57,10 +57,6 @@ def part_2(height_matrix):
             basin_points.update(next_basin_points)
             new_basin_points = next_basin_points
         basins.append(basin_points)
-    for b in basins:
-        for p in b:
-            height_matrix[p[0]][p[1]] = 'x'
-
     mul = 1
     for b in list(sorted(basins, key=lambda v: len(v), reverse=True))[:3]:
         mul *= len(b)
