@@ -60,7 +60,6 @@ def part_2(input_data):
     for line in input_data:
         rows.append([int(octo) for octo in line])
         total_len += len(line)
-    print(total_len)
     step = 0
     while True:
         step += 1
