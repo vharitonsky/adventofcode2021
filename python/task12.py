@@ -37,6 +37,7 @@ def parse_input(input_data):
 
 def part_1(cave_map):
     paths = []
+
     def descend(path, visited):
         for connected in cave_map[path[-1]]:
             if connected == 'end':
