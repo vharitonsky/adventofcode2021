@@ -42,9 +42,9 @@ def part_1(cave_map):
         for connected in cave_map[path[-1]]:
             if connected == 'end':
                 paths.append(path + ['end'])
-            elif visited.get(connected) and not connected.isupper():
-                continue
-            else:
+            elif connected.isupper():
+                descend(path + [connected], visited.copy())
+            elif connected not in visited:
                 new_visited = visited.copy()
                 new_visited[connected] = True
                 descend(path + [connected], new_visited)
