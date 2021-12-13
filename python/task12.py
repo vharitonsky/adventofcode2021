@@ -1,84 +1,80 @@
-import itertools
-from itertools import permutations
-
-input_data = """start-A
-start-b
-A-c
-A-b
-b-d
-A-end
-b-end""".split('\n')
-
-
-class Cave:
-
-    def __init__(self, name, is_start=False, is_end=False, is_big=False):
-        self.name = name
-        self.is_start = is_start
-        self.is_end = is_end
-        self.is_big = is_big
-        self.connected_caves = []
-
-    def __str__(self):
-        return f'<{self.name}>'
-
-    def __repr__(self):
-        return f'<{self.name}>'
+# input_data = """dc-end
+# HN-start
+# start-kj
+# dc-start
+# dc-HN
+# LN-dc
+# HN-end
+# kj-sa
+# kj-HN
+# kj-dc""".split('\n')
+input_data = open('task12_input').read().split('\n')
 
 
 def parse_input(input_data):
     cave_map = {}
     for line in input_data:
-        print(line)
+        if not line:
+            continue
         begins, ends = line.split('-')
-        cave_map.setdefault(begins, Cave(
-            name=begins,
-            is_start=begins == 'start',
-            is_end=False,
-            is_big=begins.isupper(),
-        ))
-        cave_map.setdefault(ends, Cave(
-            name=ends,
-            is_start=False,
-            is_end=(ends == 'end'),
-            is_big=ends.isupper(),
-        ))
-        cave_map[begins].connected_caves.append(cave_map[ends])
-        cave_map[ends].connected_caves.append(cave_map[begins])
+        if begins not in cave_map:
+            cave_map[begins] = []
+        if ends not in cave_map:
+            cave_map[ends] = []
+        if begins == 'start':
+            cave_map[begins].append(ends)
+        elif ends == 'start':
+            cave_map[ends].append(begins)
+        elif begins == 'end':
+            cave_map[ends].append(begins)
+        elif ends == 'end':
+            cave_map[begins].append(ends)
+        else:
+            cave_map[begins].append(ends)
+            cave_map[ends].append(begins)
     return cave_map
 
 
-def descend(start_cave, path, cycles):
-    if 'end' in path:
-        return
-
-    for cave in start_cave.connected_caves:
-        if cave.name == 'start':
-            continue
-        if (start_cave.name, cave.name) not in cycles:
-            path.append(cave.name)
-            cycles.append((start_cave.name, cave.name))
-            descend(cave, path, cycles)
-        return
-
-
 def part_1(cave_map):
-    start = cave_map['start']
     paths = []
-    cycles = []
-    while True:
-        new_path = []
-        descend(start, new_path, cycles)
-        if not new_path:
-            break
-        paths.append(new_path)
-    return paths
+    def descend(path, visited):
+        for connected in cave_map[path[-1]]:
+            if connected == 'end':
+                paths.append(path + ['end'])
+            elif visited.get(connected) and not connected.isupper():
+                continue
+            else:
+                new_visited = visited.copy()
+                new_visited[connected] = True
+                descend(path + [connected], new_visited)
+    descend(['start'], {})
+    return len(paths)
 
 
-def part_2(input_data):
-    pass
+def part_2(cave_map):
+    paths = []
+
+    def descend(path, visited):
+        for connected in cave_map[path[-1]]:
+            if connected == 'end':
+                paths.append(path + ['end'])
+            elif connected.isupper():
+                descend(path + [connected], visited.copy())
+            elif visited.get(connected):
+                if 2 in visited.values():
+                    continue
+                else:
+                    new_visited = visited.copy()
+                    new_visited[connected] += 1
+                    descend(path + [connected], new_visited)
+            else:
+                new_visited = visited.copy()
+                new_visited[connected] = 1
+                descend(path + [connected], new_visited)
+    descend(['start'], {})
+    return len(paths)
 
 
 if __name__ == '__main__':
     print(part_1(parse_input(input_data)))
-    print(part_2(input_data))
+    print(part_2(parse_input(input_data)))
