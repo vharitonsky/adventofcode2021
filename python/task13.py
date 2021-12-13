@@ -36,7 +36,6 @@ def parse(input_data):
     matrix = []
     for i in range(max_y + 1):
         matrix.append([0 for _ in range(max_x + 1)])
-
     for d in dots:
         matrix[d[1]][d[0]] = 1
     for line in it:
@@ -66,8 +65,8 @@ def solve(matrix, folds, steps):
             start = len(matrix[:y]) - len(matrix[y + 1:])
             for i, ii in enumerate(range(start, y)):
                 mirror_y = len(matrix) - i - 1
-                for k, x in enumerate(matrix[mirror_y]):
-                    matrix[ii][k] = matrix[ii][k] or x
+                for k, mirror_x in enumerate(matrix[mirror_y]):
+                    matrix[ii][k] = matrix[ii][k] or mirror_x
             matrix = matrix[:y]
         else:
             start = len(matrix[0][:x]) - len(matrix[0][x + 1:])
