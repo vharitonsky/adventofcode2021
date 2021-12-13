@@ -91,18 +91,11 @@ def solve(matrix, folds, steps):
             matrix = matrix[:y]
         elif isinstance(fold, XFold):
             x = fold.x
-            diff = abs(len(matrix[0]) - x * 2)
-            if diff == 1:
-                diff = 0
-                undiff = 1
-            else:
-                diff = 1
-                undiff = 0
-
+            start = len(matrix[0][:x]) - len(matrix[0][x + 1:])
             for i, row in enumerate(matrix):
-                for j, _ in enumerate(row[diff:][:x], start=diff):
-                    mirror_x = len(row) - j - undiff
-                    row[j] = row[j] or row[mirror_x]
+                for j, jj in enumerate(range(start, x)):
+                    mirror_x = len(row) - j - 1
+                    row[jj] = row[jj] or row[mirror_x]
                 matrix[i] = matrix[i][:x]
     return matrix
 
