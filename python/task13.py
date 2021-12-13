@@ -22,24 +22,6 @@ fold along x=5""".split('\n')
 input_data = open('task13_input').read().split('\n')
 
 
-class XFold:
-
-    def __init__(self, x):
-        self.x = x
-
-    def __repr__(self):
-        return f'<X={self.x}>'
-
-
-class YFold:
-
-    def __init__(self, y):
-        self.y = y
-
-    def __repr__(self):
-        return f'<Y={self.y}>'
-
-
 def parse(input_data):
     dots = []
     folds = []
@@ -62,17 +44,16 @@ def parse(input_data):
             break
         if 'x' in line:
             x = int(line.split('=')[1])
-            folds.append(XFold(x))
+            folds.append((x, 0))
         else:
             y = int(line.split('=')[1])
-            folds.append(YFold(y))
+            folds.append((0, y))
     return matrix, folds
 
 
 def _debug(matrix):
     for r in matrix:
         print(''.join(map(str, r)).replace('0', ' ').replace('1', '#'))
-    print()
 
 
 def _count(matrix):
@@ -80,17 +61,15 @@ def _count(matrix):
 
 
 def solve(matrix, folds, steps):
-    for fold in folds[:steps]:
-        if isinstance(fold, YFold):
-            y = fold.y
+    for (x, y) in folds[:steps]:
+        if y:
             start = len(matrix[:y]) - len(matrix[y + 1:])
             for i, ii in enumerate(range(start, y)):
                 mirror_y = len(matrix) - i - 1
                 for k, x in enumerate(matrix[mirror_y]):
                     matrix[ii][k] = matrix[ii][k] or x
             matrix = matrix[:y]
-        elif isinstance(fold, XFold):
-            x = fold.x
+        else:
             start = len(matrix[0][:x]) - len(matrix[0][x + 1:])
             for i, row in enumerate(matrix):
                 for j, jj in enumerate(range(start, x)):
