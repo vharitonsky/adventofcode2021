@@ -71,7 +71,7 @@ def parse(input_data):
 
 def _debug(matrix):
     for r in matrix:
-        print(''.join(map(str, r)).replace('0', '.').replace('1', '#'))
+        print(''.join(map(str, r)).replace('0', ' ').replace('1', '#'))
     print()
 
 
