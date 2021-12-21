@@ -1,144 +1,9 @@
-from itertools import permutations, combinations
-
-input_data = """--- scanner 0 ---
-404,-588,-901
-528,-643,409
--838,591,734
-390,-675,-793
--537,-823,-458
--485,-357,347
--345,-311,381
--661,-816,-575
--876,649,763
--618,-824,-621
-553,345,-567
-474,580,667
--447,-329,318
--584,868,-557
-544,-627,-890
-564,392,-477
-455,729,728
--892,524,684
--689,845,-530
-423,-701,434
-7,-33,-71
-630,319,-379
-443,580,662
--789,900,-551
-459,-707,401
-
---- scanner 1 ---
-686,422,578
-605,423,415
-515,917,-361
--336,658,858
-95,138,22
--476,619,847
--340,-569,-846
-567,-361,727
--460,603,-452
-669,-402,600
-729,430,532
--500,-761,534
--322,571,750
--466,-666,-811
--429,-592,574
--355,545,-477
-703,-491,-529
--328,-685,520
-413,935,-424
--391,539,-444
-586,-435,557
--364,-763,-893
-807,-499,-711
-755,-354,-619
-553,889,-390
-
---- scanner 2 ---
-649,640,665
-682,-795,504
--784,533,-524
--644,584,-595
--588,-843,648
--30,6,44
--674,560,763
-500,723,-460
-609,671,-379
--555,-800,653
--675,-892,-343
-697,-426,-610
-578,704,681
-493,664,-388
--671,-858,530
--667,343,800
-571,-461,-707
--138,-166,112
--889,563,-600
-646,-828,498
-640,759,510
--630,509,768
--681,-892,-333
-673,-379,-804
--742,-814,-386
-577,-820,562
-
---- scanner 3 ---
--589,542,597
-605,-692,669
--500,565,-823
--660,373,557
--458,-679,-417
--488,449,543
--626,468,-788
-338,-750,-386
-528,-832,-391
-562,-778,733
--938,-730,414
-543,643,-506
--524,371,-870
-407,773,750
--104,29,83
-378,-903,-323
--778,-728,485
-426,699,580
--438,-605,-362
--469,-447,-387
-509,732,623
-647,635,-688
--868,-804,481
-614,-800,639
-595,780,-596
-
---- scanner 4 ---
-727,592,562
--293,-554,779
-441,611,-461
--714,465,-776
--743,427,-804
--660,-479,-426
-832,-632,460
-927,-485,-438
-408,393,-506
-466,436,-512
-110,16,151
--258,-428,682
--393,719,612
--211,-452,876
-808,-476,-593
--575,615,604
--485,667,467
--680,325,-822
--627,-443,-432
-872,-547,-609
-833,512,582
-807,604,487
-839,-516,451
-891,-625,532
--652,-548,-490
-30,-46,-14""".split('\n')
-
 import re
-import math
+from collections import defaultdict
+from itertools import permutations
+
+input_data = open('task19_input_example').read().split('\n')
+# input_data = open('task19_input').read().split('\n')
 
 
 class Beacon:
@@ -148,44 +13,43 @@ class Beacon:
     def __repr__(self):
         return f"<Beacon {self.x} {self.y} {self.z}>"
 
-    __str__ = __repr__
-
-
-class Vector:
-    def __init__(self, x, y, z):
-        self.length = int(math.sqrt(x * x + y * y + z * z))
-        self.a = x/self.length
-        self.b = y/self.length
-        self.c = z/self.length
-
-    def __repr__(self):
-        return f"<Vector l={self.length} a={self.a} b={self.b} c={self.c}>"
-
-    __str__ = __repr__
-
     def __hash__(self):
-        return hash((self.length, tuple(sorted([abs(self.a), abs(self.b), abs(self.c)]))))
+        return hash((self.x, self.y, self.z))
+
+    def __eq__(self, other):
+        return self.x == other.x and self.y == other.y and self.z == other.z
+
+    def __ne__(self, other):
+        return self.x != other.x or self.y == other.y or self.z != other.z
+
+    def __add__(self, other):
+        return Beacon(self.x + other.x, self.y + other.y, self.z + other.z)
+
+    def __sub__(self, other):
+        return Beacon(self.x - other.x, self.y - other.y, self.z - other.z)
+
+    def orientations(self):
+        for x, y, z in permutations((self.x, self.y, self.z), 3):
+            yield Beacon(x, y, z)
+            yield Beacon(-x, y, -z)
+            yield Beacon(-x, -y, z)
+            yield Beacon(x, -y, -z)
+
+    __str__ = __repr__
 
 
 class Scanner:
     def __init__(self, id, beacons):
         self.id, self.beacons = id, beacons
 
+    def beacon_combinations(self):
+        for b in self.beacons:
+            for orientation in b.orientations():
+                yield orientation
+
     def __repr__(self):
         return f"<Scanner {self.id}>"
     __str__ = __repr__
-
-    def get_beacon_to_beacon_vectors(self):
-        vectors = []
-        for vec_start, vec_end in combinations(self.beacons, 2):
-            vectors.append(
-                Vector(
-                    vec_end.x - vec_start.x,
-                    vec_end.y - vec_start.y,
-                    vec_end.z - vec_start.z
-                )
-            )
-        return vectors
 
 
 def parse(input_data):
@@ -200,21 +64,32 @@ def parse(input_data):
             beacons = []
         else:
             beacons.append(Beacon(*map(int, line.split(','))))
-    scanners.append(Scanner(id=scanner_id, beacons=beacons))
+    if scanner_id:
+        scanners.append(Scanner(id=scanner_id, beacons=beacons))
     return scanners
 
 
 def part_1(scanners):
-    scanner_to_vectors = {}
-    for s in scanners:
-        scanner_to_vectors[s] = {vec for vec in s.get_beacon_to_beacon_vectors()}
+    combs_1 = {beacon for beacon in scanners[0].beacon_combinations()}
+    combs_2 = {beacon for beacon in scanners[1].beacon_combinations()}
+    diff_count = defaultdict(int)
+    for comb_1 in combs_1:
+        for comb_2 in combs_2:
+            diff_count[comb_1 - comb_2] += 1
+    diff, count = sorted(
+        diff_count.items(),
+        key=lambda key_count: key_count[1],
+        reverse=True
+    )[0]
 
-    for s_l, s_r in combinations(scanners, 2):
-        vectors_l, vectors_r = scanner_to_vectors[s_l], scanner_to_vectors[s_r]
-        for vector in vectors_l:
-            # breakpoint()
-            if vector in vectors_r:
-                breakpoint()
+    for beacon in combs_1:
+        if (beacon - diff) in combs_2:
+            print(beacon)
+
+    for beacon in combs_2:
+        if (beacon + diff) in combs_1:
+            print(beacon)
+
     return scanners
 
 
