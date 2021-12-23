@@ -62,18 +62,71 @@ off x=-93533..-4276,y=-16170..68771,z=-104985..-24507""".split('\n')
 # input_data = open('task22_input').read().split('\n')[:-1]
 
 
-def parse(input_data):
-    steps = []
-    for line in input_data:
-        action, coords = line.split()
-        action = 1 if action == 'on' else 0
-        ranges = [
-            list(map(int, r.split('=')[1].split('..')))
-            for r in coords.split(',')
-        ]
+class CuboidRegion:
 
-        steps.append((action, ranges))
-    return steps
+    def __init__(self, action, x_range, y_range, z_range):
+        self.action = action
+        self.x1, self.x2 = x_range
+        self.y1, self.y2 = y_range
+        self.z1, self.z2 = z_range
+
+        self.min_x = min(self.x1, self.x2)
+        self.min_y = min(self.y1, self.y2)
+        self.min_z = min(self.z1, self.z2)
+
+        self.max_x = max(self.x1, self.x2)
+        self.max_y = max(self.x1, self.x2)
+        self.max_z = max(self.x1, self.x2)
+
+        self.v = abs(
+            (self.x2 - self.x1) * (self.y2 - self.y1) - (self.z2 - self.z1)
+        )
+        self.intersections = []
+
+    def __repr__(self):
+        return f"<CuboidRegion " \
+               f"v={self.v} x={self.x1}..{self.x2} " \
+               f"y={self.y1}..{self.y2} " \
+               f"y={self.z1}..{self.z2} >"
+
+    def overlaps(self, other: 'CuboidRegion'):
+        x_overlaps = (
+            self.min_x <= other.min_x <= self.max_x or
+            self.min_x <= other.max_x <= self.max_x or
+            other.min_x <= self.min_x <= other.max_x or
+            other.min_x <= self.max_x <= other.max_x
+        )
+
+        y_overlaps = (
+                self.min_y <= other.min_y <= self.max_y or
+                self.min_y <= other.max_y <= self.max_y or
+                other.min_y <= self.min_y <= other.max_y or
+                other.min_y <= self.max_y <= other.max_y
+        )
+
+        z_overlaps = (
+                self.min_z <= other.min_z <= self.max_z or
+                self.min_z <= other.max_z <= self.max_z or
+                other.min_z <= self.min_z <= other.max_z or
+                other.min_z <= self.max_z <= other.max_z
+        )
+        return x_overlaps and y_overlaps and z_overlaps
+
+    def intersection(self, other: 'CuboidRegion'):
+        x1 = max(self.min_x, other.min_x)
+        x2 = min(self.max_x, other.max_x)
+
+        y1 = max(self.min_y, other.min_y)
+        y2 = min(self.max_y, other.max_y)
+
+        z1 = max(self.min_z, other.min_z)
+        z2 = min(self.max_z, other.max_z)
+        return CuboidRegion(other.action, (x1, x2), (y1, y2), (z1, z2))
+
+    def intersect(self, other):
+        if not self.overlaps(other):
+            return
+        self.intersections.append(self.intersection(other))
 
 
 def parse_p1(input_data):
@@ -89,7 +142,6 @@ def parse_p1(input_data):
             if value_right > 50:
                 value_right = 50
             ranges.append((value_left, value_right))
-
         steps.append((action, ranges))
     return steps
 
@@ -100,25 +152,34 @@ def part_1(steps):
         for x in range(ranges[0][0], ranges[0][1]+1):
             for y in range(ranges[1][0], ranges[1][1]+1):
                 for z in range(ranges[2][0], ranges[2][1]+1):
-                    if x < -50 or x > 50:
-                        continue
-                    if y < -50 or z > 50:
-                        continue
-                    if z < -50 or z > 50:
-                        continue
                     grid[(x, y, z)] = action
     return sum(grid.values())
 
 
-def part_2(steps):
-    on_cubes = 0
-    for i, (action, (x, y, z)) in enumerate(steps):
-        overlaps = []
-        for prev_action, (x_prev, y_prev, z_prev) in steps[i:0:-1]:
-            if max(x) < min(x_prev) or max(x_prev):
-                pass
+def parse_p2(input_data):
+    cuboid_regions = []
+    for line in input_data:
+        action, coords = line.split()
+        action = 1 if action == 'on' else 0
+        ranges = [
+            list(map(int, r.split('=')[1].split('..')))
+            for r in coords.split(',')
+        ]
+        cuboid_regions.append(CuboidRegion(action, *ranges))
+    return cuboid_regions
+
+
+def part_2(cuboid_regions):
+    lit_cuboids = []
+    for cuboid_region in cuboid_regions:
+        for other_region in lit_cuboids:
+            other_region.intersect(cuboid_region)
+            cuboid_region.intersect(other_region)
+        if cuboid_region.action:
+            lit_cuboids.append(cuboid_region)
+    return cuboid_regions
 
 
 if __name__ == '__main__':
     print(part_1(parse_p1(input_data)))
-    print(part_2(parse_p1(input_data)))
+    print(part_2(parse_p2(input_data)))
